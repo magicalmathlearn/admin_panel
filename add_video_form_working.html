@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Video</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, select, button { width: 100%; padding: 8px; margin-top: 5px; }
+    #statusMessage { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Add New Video</h2>
+  <form id="videoForm">
+    <label for="batch">Batch:</label>
+    <select id="batch" required></select>
+
+    <label for="subject">Subject:</label>
+    <select id="subject" required></select>
+
+    <label for="topic">Topic:</label>
+    <select id="topic" required></select>
+
+    <label for="title">Video Title:</label>
+    <input type="text" id="title" required />
+
+    <label for="youtube_url">YouTube URL:</label>
+    <input type="text" id="youtube_url" required />
+
+    <label for="valid_till">Valid Till:</label>
+    <input type="date" id="valid_till" required />
+
+    <button type="submit">Add Video</button>
+  </form>
+
+  <div id="statusMessage"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const supabase = window.supabase.createClient(
+        'https://kaqhtfzlttjrgkyoaghl.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo'
+      );
+
+      async function loadDropdown(selectId, table, valueKey, textKey) {
+        const res = await supabase.from(table).select(`${valueKey}, ${textKey}`);
+        const select = document.getElementById(selectId);
+        select.innerHTML = "<option value=''>-- Select --</option>";
+        res.data?.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item[valueKey];
+          opt.textContent = item[textKey];
+          select.appendChild(opt);
+        });
+      }
+
+      await loadDropdown("batch", "batches", "id", "batch_name");
+      await loadDropdown("subject", "subjects", "id", "subject_name");
+
+      document.getElementById("subject").addEventListener("change", async function () {
+        const subjectId = this.value;
+        const { data: topics } = await supabase.from("topics").select("id, topic_name").eq("subject_id", subjectId);
+        const topicSelect = document.getElementById("topic");
+        topicSelect.innerHTML = "<option value=''>-- Select Topic --</option>";
+        topics?.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t.id;
+          opt.textContent = t.topic_name;
+          topicSelect.appendChild(opt);
+        });
+      });
+
+      document.getElementById("videoForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const newVideo = {
+          title: form.title.value.trim(),
+          youtube_link: form.youtube_url.value.trim(),
+          batch_id: form.batch.value,
+          subject_id: form.subject.value,
+          topic_id: form.topic.value,
+          valid_till: form.valid_till.value,
+        };
+
+        const { error } = await supabase.from("videos").insert([newVideo]);
+        const status = document.getElementById("statusMessage");
+        if (error) {
+          status.textContent = "❌ Error: " + error.message;
+        } else {
+          status.textContent = "✅ Video added successfully!";
+          form.reset();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

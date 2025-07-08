@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User List</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
+    h2 { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background-color: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h2>All Registered Users</h2>
+  <table id="userTable">
+    <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Father Name</th>
+        <th>Phone</th>
+        <th>Father Phone</th>
+        <th>Email</th>
+        <th>Refer Code</th>
+        <th>Referred By</th>
+        <th>Created At</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://kaqhtfzlttjrgkyoaghl.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo'
+    );
+
+    async function loadUsers() {
+      const { data: users, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        return;
+      }
+
+      const tbody = document.querySelector('#userTable tbody');
+      tbody.innerHTML = '';
+
+      users.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${user.full_name || ''}</td>
+          <td>${user.father_name || ''}</td>
+          <td>${user.phone || ''}</td>
+          <td>${user.father_phone || ''}</td>
+          <td>${user.email || ''}</td>
+          <td>${user.refer_code || ''}</td>
+          <td>${user.referred_by || ''}</td>
+          <td>${user.created_at ? new Date(user.created_at).toLocaleString() : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>

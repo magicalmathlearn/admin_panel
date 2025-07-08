@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Homework Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 1000px; margin: auto; }
+    h2 { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    th { background-color: #f2f2f2; }
+    textarea { width: 100%; height: 50px; }
+    button { padding: 6px 12px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h2>Submitted Homework</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Batch ID</th>
+        <th>Submitted File</th>
+        <th>Status</th>
+        <th>Remark</th>
+        <th>Update</th>
+      </tr>
+    </thead>
+    <tbody id="homeworkBody"></tbody>
+  </table>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://kaqhtfzlttjrgkyoaghl.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo'
+    );
+
+    async function loadHomework() {
+      const { data, error } = await supabase.from('homework').select('*').order('created_at', { ascending: false });
+      const tbody = document.getElementById("homeworkBody");
+      tbody.innerHTML = "";
+
+      if (error) {
+        tbody.innerHTML = "<tr><td colspan='6'>Error loading homework.</td></tr>";
+        return;
+      }
+
+      data.forEach(hw => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${hw.student_id || ""}</td>
+          <td>${hw.batch_id || ""}</td>
+          <td><a href="${hw.homework_file}" target="_blank">View</a></td>
+          <td>${hw.status || "pending"}</td>
+          <td>
+            <textarea id="remark-${hw.id}">${hw.remark || ""}</textarea>
+          </td>
+          <td>
+            <button onclick="updateRemark('${hw.id}', 'resubmit')">Mark Re-submit</button>
+            <button onclick="updateRemark('${hw.id}', 'approved')">Mark Approved</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateRemark(id, status) {
+      const remarkText = document.getElementById(`remark-${id}`).value;
+
+      const { error } = await supabase
+        .from('homework')
+        .update({ status: status, remark: remarkText })
+        .eq('id', id);
+
+      if (error) {
+        alert("❌ Update failed: " + error.message);
+      } else {
+        alert("✅ Updated successfully");
+        loadHomework();
+      }
+    }
+
+    loadHomework();
+  </script>
+</body>
+</html>

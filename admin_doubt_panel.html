@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Doubt Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 1000px; margin: auto; }
+    h2 { margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top; }
+    th { background-color: #f4f4f4; }
+    textarea { width: 100%; height: 60px; }
+    img { max-width: 120px; max-height: 120px; display: block; margin-top: 5px; }
+    button { margin-top: 5px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h2>Doubt Panel (Admin View)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Batch</th>
+        <th>Doubt</th>
+        <th>Image</th>
+        <th>Status</th>
+        <th>Remark</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="doubtTableBody"></tbody>
+  </table>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://kaqhtfzlttjrgkyoaghl.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo'
+    );
+
+    async function loadDoubts() {
+      const { data, error } = await supabase.from('doubts').select('*').order('created_at', { ascending: false });
+      const tbody = document.getElementById("doubtTableBody");
+      tbody.innerHTML = "";
+
+      if (error) {
+        tbody.innerHTML = "<tr><td colspan='7'>❌ Error loading doubts</td></tr>";
+        return;
+      }
+
+      data.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${d.student_id || ""}</td>
+          <td>${d.batch_id || ""}</td>
+          <td>${d.doubt_text || ""}</td>
+          <td>${d.doubt_image ? `<a href="${d.doubt_image}" target="_blank"><img src="${d.doubt_image}"/></a>` : "No Image"}</td>
+          <td>${d.status || "pending"}</td>
+          <td>
+            <textarea id="remark-${d.id}">${d.remark || ""}</textarea>
+          </td>
+          <td>
+            <button onclick="markSolved('${d.id}')">Mark Solved</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function markSolved(id) {
+      const remarkText = document.getElementById(`remark-${id}`).value;
+
+      const { error } = await supabase
+        .from('doubts')
+        .update({ status: 'solved', remark: remarkText })
+        .eq('id', id);
+
+      if (error) {
+        alert("❌ Update failed");
+      } else {
+        alert("✅ Marked as Solved");
+        loadDoubts();
+      }
+    }
+
+    loadDoubts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Assign Subject to Batch</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    select, button { width: 100%; padding: 10px; margin-top: 5px; }
+    #statusMessage { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Assign Subject to Batch</h2>
+  <form id="linkForm">
+    <label for="batch">Select Batch:</label>
+    <select id="batch" required></select>
+
+    <label for="subject">Select Subject:</label>
+    <select id="subject" required></select>
+
+    <button type="submit">Assign Subject</button>
+  </form>
+  <div id="statusMessage"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const supabase = window.supabase.createClient(
+        'https://kaqhtfzlttjrgkyoaghl.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo'
+      );
+
+      async function loadOptions() {
+        const batchSelect = document.getElementById("batch");
+        const subjectSelect = document.getElementById("subject");
+
+        const { data: batches } = await supabase.from("batches").select("id, batch_name");
+        const { data: subjects } = await supabase.from("subjects").select("id, subject_name");
+
+        batches?.forEach(b => {
+          const opt = document.createElement("option");
+          opt.value = b.id;
+          opt.textContent = b.batch_name;
+          batchSelect.appendChild(opt);
+        });
+
+        subjects?.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = s.subject_name;
+          subjectSelect.appendChild(opt);
+        });
+      }
+
+      await loadOptions();
+
+      document.getElementById("linkForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const batch_id = document.getElementById("batch").value;
+        const subject_id = document.getElementById("subject").value;
+
+        const { error } = await supabase.from("batch_subjects").insert([{ batch_id, subject_id }]);
+
+        const status = document.getElementById("statusMessage");
+        if (error) {
+          status.textContent = "❌ Error: " + error.message;
+        } else {
+          status.textContent = "✅ Subject assigned to batch successfully!";
+          document.getElementById("linkForm").reset();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

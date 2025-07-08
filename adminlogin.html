@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login - Magical Math Learn</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h2>Admin Login</h2>
+  <input type="email" id="email" placeholder="Email" /><br><br>
+  <input type="password" id="password" placeholder="Password" /><br><br>
+  <button onclick="login()">Login</button>
+  <p id="status"></p>
+
+  <script>
+    // Supabase config
+    const SUPABASE_URL = "https://kaqhtfzlttjrgkyoaghl.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { data, error } = await client.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      const status = document.getElementById("status");
+
+      if (error) {
+        console.error("Login Error:", error);
+        status.innerText = "❌ Login failed: " + error.message;
+        status.style.color = "red";
+      } else {
+        console.log("Login Success:", data);
+        status.innerText = "✅ Login successful!";
+        status.style.color = "green";
+
+        // Optional: Redirect to admin dashboard
+        // window.location.href = "dashboard.html";
+      }
+    }
+  </script>
+</body>
+</html>

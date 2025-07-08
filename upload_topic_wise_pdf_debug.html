@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload PDF (Topic-wise Debug)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 700px; margin: auto; }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    select, input, button { width: 100%; padding: 8px; margin-top: 5px; }
+    #statusMessage { margin-top: 20px; font-weight: bold; color: red; }
+  </style>
+</head>
+<body>
+  <h2>Upload PDF (Topic-wise) – Debug Mode</h2>
+  <form id="pdfForm">
+    <label for="batch">Select Batch:</label>
+    <select id="batch" required></select>
+
+    <label for="subject">Select Subject:</label>
+    <select id="subject" required></select>
+
+    <label for="topic">Select Topic:</label>
+    <select id="topic" required></select>
+
+    <label for="title">PDF Title:</label>
+    <input type="text" id="title" required placeholder="e.g. Algebra Notes" />
+
+    <label for="type">Type:</label>
+    <select id="type" required>
+      <option value="">-- Select Type --</option>
+      <option value="notes">Notes</option>
+      <option value="ebook">eBook</option>
+      <option value="dpp">DPP</option>
+    </select>
+
+    <label for="pdfFile">Choose PDF File:</label>
+    <input type="file" id="pdfFile" accept=".pdf" required />
+
+    <button type="submit">Upload PDF</button>
+  </form>
+
+  <div id="statusMessage"></div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://kaqhtfzlttjrgkyoaghl.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo'
+    );
+
+    async function loadDropdown(selectId, table, valueKey, textKey) {
+      const { data } = await supabase.from(table).select(`${valueKey}, ${textKey}`);
+      const select = document.getElementById(selectId);
+      select.innerHTML = "<option value=''>-- Select --</option>";
+      data?.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item[valueKey];
+        opt.textContent = item[textKey];
+        select.appendChild(opt);
+      });
+    }
+
+    async function loadTopics(subjectId) {
+      const topicSelect = document.getElementById("topic");
+      const { data } = await supabase.from("topics").select("id, topic_name").eq("subject_id", subjectId);
+      topicSelect.innerHTML = "<option value=''>-- Select Topic --</option>";
+      data?.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.topic_name;
+        topicSelect.appendChild(opt);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadDropdown("batch", "batches", "id", "batch_name");
+      await loadDropdown("subject", "subjects", "id", "subject_name");
+
+      document.getElementById("subject").addEventListener("change", (e) => {
+        const subjectId = e.target.value;
+        loadTopics(subjectId);
+      });
+
+      document.getElementById("pdfForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const title = document.getElementById("title").value.trim();
+        const type = document.getElementById("type").value.toLowerCase();
+        const batch_id = document.getElementById("batch").value;
+        const subject_id = document.getElementById("subject").value;
+        const topic_id = document.getElementById("topic").value;
+        const file = document.getElementById("pdfFile").files[0];
+        const fileName = `${Date.now()}_${file?.name}`;
+        const status = document.getElementById("statusMessage");
+
+        console.log("Title:", title);
+        console.log("Type:", type);
+        console.log("Batch ID:", batch_id);
+        console.log("Subject ID:", subject_id);
+        console.log("Topic ID:", topic_id);
+        console.log("File name:", fileName);
+        console.log("File object:", file);
+
+        if (!file) {
+          status.textContent = "❌ Please select a file.";
+          return;
+        }
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("pdfs")
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          status.textContent = "❌ Upload to storage failed: " + uploadError.message;
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage.from("pdfs").getPublicUrl(fileName);
+        console.log("Public URL:", publicUrl);
+
+        const { error: dbError } = await supabase.from("pdfs").insert([{
+          title, type, batch_id, subject_id, topic_id, file_url: publicUrl
+        }]);
+
+        if (dbError) {
+          console.error("Insert DB Error:", dbError);
+          status.textContent = "❌ Insert to database failed: " + dbError.message;
+        } else {
+          status.style.color = "green";
+          status.textContent = "✅ PDF uploaded successfully!";
+          document.getElementById("pdfForm").reset();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Batch</title>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    // Supabase client initialization
+    const supabase = createClient(
+      "https://kaqhtfzlttjrgkyoaghl.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo"
+    );
+
+    window.addBatch = async function () {
+      const batch_name = document.getElementById('batch_name').value;
+      const class_name = document.getElementById('class').value;
+      const fees = parseFloat(document.getElementById('fees').value);
+      const duration = document.getElementById('duration').value;
+      const validity = document.getElementById('validity').value;
+
+      console.log("Inserting batch:", { batch_name, class_name, fees, duration, validity });
+
+      const { data, error } = await supabase
+        .from("batches")
+        .insert([
+          {
+            batch_name,
+            class: class_name,
+            fees,
+            duration,
+            validity
+          }
+        ]);
+
+      if (error) {
+        alert("❌ Error: " + error.message);
+        console.error(error);
+      } else {
+        alert("✅ Batch Added Successfully!");
+        console.log(data);
+      }
+    };
+  </script>
+</head>
+<body>
+  <h2>Add Batch</h2>
+
+  <input type="text" id="batch_name" placeholder="Batch Name"><br><br>
+  <input type="text" id="class" placeholder="Class"><br><br>
+  <input type="number" id="fees" placeholder="Fees"><br><br>
+  <input type="text" id="duration" placeholder="Duration"><br><br>
+  <input type="text" id="validity" placeholder="Validity"><br><br>
+
+  <button onclick="addBatch()">Add Batch</button>
+</body>
+</html>

@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Topic (Admin Panel)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    input, select, button { width: 100%; padding: 10px; margin-top: 5px; }
+    #statusMessage { font-weight: bold; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Add New Topic</h2>
+  <form id="topicForm">
+    <label for="subject">Select Subject:</label>
+    <select id="subject" required></select>
+
+    <label for="topic_name">Topic Name:</label>
+    <input type="text" id="topic_name" placeholder="e.g. Algebra" required />
+
+    <button type="submit">Add Topic</button>
+  </form>
+  <div id="statusMessage"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const supabase = window.supabase.createClient(
+        "https://kaqhtfzlttjrgkyoaghl.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo"
+      );
+
+      const subjectSelect = document.getElementById("subject");
+      const { data: subjects, error: subjectError } = await supabase.from("subjects").select("id, subject_name");
+
+      if (subjectError) {
+        document.getElementById("statusMessage").innerText = "❌ Failed to load subjects: " + subjectError.message;
+        return;
+      }
+
+      subjects.forEach(sub => {
+        const option = document.createElement("option");
+        option.value = sub.id;
+        option.textContent = sub.subject_name;
+        subjectSelect.appendChild(option);
+      });
+
+      document.getElementById("topicForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const subject_id = subjectSelect.value;
+        const topic_name = document.getElementById("topic_name").value.trim();
+
+        const { error } = await supabase.from("topics").insert([{ subject_id, topic_name }]);
+
+        const statusEl = document.getElementById("statusMessage");
+        if (error) {
+          statusEl.innerText = "❌ Error: " + error.message;
+        } else {
+          statusEl.innerText = "✅ Topic added successfully!";
+          document.getElementById("topicForm").reset();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

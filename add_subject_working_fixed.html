@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Subject</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    input, button { width: 100%; padding: 10px; margin-top: 5px; }
+    #statusMessage { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Add New Subject</h2>
+  <form id="subjectForm">
+    <label for="subject_name">Subject Name:</label>
+    <input type="text" id="subject_name" required placeholder="e.g. Mathematics" />
+    <button type="submit">Add Subject</button>
+  </form>
+  <div id="statusMessage"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const supabase = window.supabase.createClient(
+        "https://kaqhtfzlttjrgkyoaghl.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo"
+      );
+
+      const form = document.getElementById("subjectForm");
+      const statusMessage = document.getElementById("statusMessage");
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const subject_name = document.getElementById("subject_name").value.trim();
+
+        const { error } = await supabase.from("subjects").insert([{ subject_name }]);
+
+        if (error) {
+          statusMessage.textContent = "❌ Error: " + error.message;
+        } else {
+          statusMessage.textContent = "✅ Subject added successfully!";
+          form.reset();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

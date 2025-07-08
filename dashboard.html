@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h2 { margin-top: 40px; }
+    .card { border: 1px solid #ccc; padding: 16px; margin-bottom: 20px; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard</h1>
+
+  <div class="card">
+    <h2>Total Users: <span id="total-users">Loading...</span></h2>
+  </div>
+
+  <div class="card">
+    <h2>User List</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Created At</th>
+        </tr>
+      </thead>
+      <tbody id="user-table"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://kaqhtfzlttjrgkyoaghl.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcWh0ZnpsdHRqcmdreW9hZ2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4OTQwODUsImV4cCI6MjA2NzQ3MDA4NX0.DXmguK07kGfvEQ6MvTyDNCAZEmUvgrlhauxHoSRThDo";
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadUsers() {
+      const { data, error } = await supabase.auth.admin.listUsers();
+
+      if (error) {
+        console.error("Error fetching users:", error);
+        document.getElementById("total-users").textContent = "Error";
+        return;
+      }
+
+      document.getElementById("total-users").textContent = data.users.length;
+
+      const tableBody = document.getElementById("user-table");
+      data.users.forEach(user => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${user.email}</td><td>${new Date(user.created_at).toLocaleString()}</td>`;
+        tableBody.appendChild(row);
+      });
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
